@@ -1,23 +1,83 @@
+//! # Overview
+//!
+//! BudouX-rs is a rust port of [BudouX](https://github.com/google/budoux) (machine learning powered line break organizer tool).
+//!
+//! Note:
+//! This project contains the deliverables of the [BudouX](https://github.com/google/budoux) project.
+//!
+//! Note:
+//! BudouX-rs supported plain text only, not supports html inputs.
+
 use std::collections::HashMap;
 
 mod unicode_blocks;
 
+/// models provides trained machine learning model.
 pub mod models;
 
-/// DEFAULT_THRESHOLD default threshold for splitting a sentence.
+/// DEFAULT_THRESHOLD is default threshold for splitting a sentences.
 pub const DEFAULT_THRESHOLD: i32 = 1000;
 
-/// Model trained machine learning model.
+/// Model is type of trained machine learning model.
 /// key (String) is feature of character, value (i32) is score of feature.
 pub type Model = HashMap<String, i32>;
 
 /// parse returns splitted string slice from input.
-/// it is shorthand for budoux::parse_with_threshold(model, input, budoux::DEFAULT_THRESHOLD).
+/// It is shorthand for budoux::parse_with_threshold(model, input, budoux::DEFAULT_THRESHOLD).
+///
+/// * `model` - trained machine learning model.
+/// * `input` - input sentences.
+///
+/// # Examples
+///
+/// Split sentences with internal model.
+///
+/// ```
+/// let model = budoux::models::default_japanese_model();
+/// let words = budoux::parse(model, "これはテストです。");
+///
+/// assert_eq!(words, vec!["これは", "テストです。"]);
+/// ```
+///
+/// Load model from json file and split sentences using the loaded model.
+///
+/// ```ignore
+/// let file = File::open(path_to_json).unwrap();
+/// let reader = BufReader::new(file);
+/// let model: budoux::Model = serde_json::from_reader(reader).unwrap();
+/// let words = budoux::parse(&model, "これはテストです。");
+///
+/// assert_eq!(words, vec!["これは", "テストです。"]);
+/// ```
 pub fn parse(model: &Model, input: &str) -> Vec<String> {
     parse_with_threshold(model, input, DEFAULT_THRESHOLD)
 }
 
 /// parse_with_threshold returns splitted string slice from input.
+///
+/// * `model` - trained machine learning model.
+/// * `input` - input sentences.
+/// * `threshold` - threshold for splitting a sentences.
+///
+/// # Examples
+///
+/// Split sentences with internal model.
+///
+/// ```
+/// let model = budoux::models::default_japanese_model();
+/// let words = budoux::parse_with_threshold(model, "これはテストです。", budoux::DEFAULT_THRESHOLD);
+///
+/// assert_eq!(words, vec!["これは", "テストです。"]);
+/// ```
+///
+/// If you use a large threshold, will not be split.
+///
+/// ```
+/// let model = budoux::models::default_japanese_model();
+/// let words = budoux::parse_with_threshold(model, "これはテストです。", 100000000);
+///
+/// assert_eq!(words, vec!["これはテストです。"]);
+/// ```
 pub fn parse_with_threshold(model: &Model, input: &str, threshold: i32) -> Vec<String> {
     let chars: Vec<char> = input.chars().collect();
 
@@ -71,7 +131,7 @@ pub fn parse_with_threshold(model: &Model, input: &str, threshold: i32) -> Vec<S
     out
 }
 
-/// get_unicode_block_and_feature returns unicode character and block feature from rune slice.
+/// get_unicode_block_and_feature returns unicode character and block feature from char slice.
 fn get_unicode_block_and_feature(chars: &[char], index: usize) -> (String, String) {
     if chars.len() <= index {
         return (String::from(""), String::from("999")); // out of index.

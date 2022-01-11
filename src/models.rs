@@ -1,6 +1,7 @@
 #[path = "ja_knbc.rs"]
 mod ja_knbc;
 
+/// default_japanese_model returns trained machine learning model for japanese.
 pub fn default_japanese_model() -> &'static crate::Model {
     &ja_knbc::MODEL
 }
