@@ -44,6 +44,12 @@ assert_eq!(words, vec!["これは", "テストです。"])
 cargo test
 ```
 
+You can use GitHub Actions locally by [act](https://github.com/nektos/act).
+
+```console
+act -j test
+```
+
 ## Generate model from original BudouX
 
 ```console
