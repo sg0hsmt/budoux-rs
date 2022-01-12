@@ -1,5 +1,10 @@
 # BudouX-rs
 
+[![Crates.io](https://img.shields.io/crates/v/budoux.svg)](https://crates.io/crates/budoux)
+[![API reference](https://docs.rs/budoux/badge.svg)](https://docs.rs/crate/budoux/)
+[![Test](https://github.com/sg0hsmt/budoux-rs/actions/workflows/test.yaml/badge.svg)](https://github.com/sg0hsmt/budoux-rs/actions/workflows/test.yaml)
+[![License](https://img.shields.io/github/license/sg0hsmt/budoux-rs.svg)](https://github.com/sg0hsmt/budoux-rs/blob/master/LICENSE)
+
 BudouX-rs is a rust port of [BudouX](https://github.com/google/budoux) (machine learning powered line break organizer tool).
 
 Note:
@@ -14,7 +19,7 @@ TBD
 
 ## Documentation
 
-TBD
+https://docs.rs/crate/budoux/
 
 ## Usage
 
