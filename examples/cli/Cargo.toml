@@ -1,0 +1,9 @@
+[package]
+name = "budoux-cli"
+version = "0.0.2"
+edition = "2021"
+
+[dependencies]
+budoux = { path = "../../" }
+getopts = "0.2"
+serde_json = "1.0"

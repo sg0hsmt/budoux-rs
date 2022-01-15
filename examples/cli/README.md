@@ -5,8 +5,8 @@ CLI for BudouX-rs.
 ## Usage
 
 ```console
-$ cargo run --example cli -- -h
-Usage: target\debug\examples\cli.exe [options]
+$ cargo run -- -h
+Usage: target\debug\examples\budoux-cli.exe [options]
 
 Options:
         --in INPUT      input string
@@ -17,7 +17,7 @@ Options:
 Split Japanese sentences with internal model.
 
 ```console
-$ cargo run --example cli -- --in "日本語の文章をいい感じに分割します。"
+$ cargo run -- --in "日本語の文章をいい感じに分割します。"
 日本語の
 文章を
 いい
@@ -28,7 +28,7 @@ $ cargo run --example cli -- --in "日本語の文章をいい感じに分割し
 Split Japanese sentences using the specified model.
 
 ```console
-$ cargo run --example cli -- --model ja-knbc.json --in "日本語の文章をいい感じに分割します。"
+$ cargo run -- --model ja-knbc.json --in "日本語の文章をいい感じに分割します。"
 日本語の
 文章を
 いい
