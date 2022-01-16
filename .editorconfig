@@ -11,5 +11,5 @@ insert_final_newline = true
 [*.{go}]
 indent_style = tab
 
-[*.{yaml,yml,json,md}]
+[*.{yaml,yml,json,md,html,scss}]
 indent_size = 2
