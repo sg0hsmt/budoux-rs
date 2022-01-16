@@ -15,7 +15,7 @@ BudouX-rs supported plain text only, not supports html inputs.
 
 ## Demo
 
-TBD
+https://sg0hsmt.github.io/budoux-rs/
 
 ## Documentation
 
