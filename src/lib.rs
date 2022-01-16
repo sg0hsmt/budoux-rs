@@ -141,7 +141,7 @@ fn get_unicode_block_and_feature(chars: &[char], index: usize) -> (String, Strin
     let c = v as u32;
 
     let pos = match unicode_blocks::UNICODE_BLOCKS.binary_search(&c) {
-        Ok(v) => v,
+        Ok(v) => v + 1,
         Err(e) => e,
     };
 
