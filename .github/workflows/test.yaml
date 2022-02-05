@@ -10,35 +10,40 @@ permissions:
   contents: read
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain: [stable, nightly]
+        platform: [ubuntu-latest]
+    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
-
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: ${{ matrix.toolchain }}
           override: true
           profile: minimal
           components: rustfmt, clippy
-
       - name: cargo check
         uses: actions-rs/cargo@v1
         with:
           command: check
-
       - name: cargo test
         uses: actions-rs/cargo@v1
         with:
           command: test
-
       - name: cargo fmt
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: --all -- --check
-
       - name: cargo clippy
         uses: actions-rs/cargo@v1
         with:
           command: clippy
           args: -- -D warnings
+      - name: cargo bench
+        if: ${{ matrix.toolchain == 'nightly' }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: bench
+          toolchain: nightly
