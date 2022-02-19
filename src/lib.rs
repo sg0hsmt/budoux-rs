@@ -92,12 +92,13 @@ pub fn parse_with_threshold(model: &Model, input: &str, threshold: i32) -> Vec<S
     let mut p2 = "U"; // unknown
     let mut p3 = "U"; // unknown
 
+    let (mut w1, mut b1) = get_unicode_block_and_feature(&chars, 0); // i - 3
+    let (mut w2, mut b2) = get_unicode_block_and_feature(&chars, 1); // i - 2
+    let (mut w3, mut b3) = get_unicode_block_and_feature(&chars, 2); // i - 1
+    let (mut w4, mut b4) = get_unicode_block_and_feature(&chars, 3); // i
+    let (mut w5, mut b5) = get_unicode_block_and_feature(&chars, 4); // i + 1
+
     for i in 3..chars.len() {
-        let (w1, b1) = get_unicode_block_and_feature(&chars, i - 3);
-        let (w2, b2) = get_unicode_block_and_feature(&chars, i - 2);
-        let (w3, b3) = get_unicode_block_and_feature(&chars, i - 1);
-        let (w4, b4) = get_unicode_block_and_feature(&chars, i);
-        let (w5, b5) = get_unicode_block_and_feature(&chars, i + 1);
         let (w6, b6) = get_unicode_block_and_feature(&chars, i + 2);
 
         let score: i32 = get_feature(
@@ -109,7 +110,7 @@ pub fn parse_with_threshold(model: &Model, input: &str, threshold: i32) -> Vec<S
 
         if score > threshold {
             out.push(buf);
-            buf = w4;
+            buf = w4.to_string();
         } else {
             buf += &w4;
         }
@@ -122,6 +123,18 @@ pub fn parse_with_threshold(model: &Model, input: &str, threshold: i32) -> Vec<S
         } else {
             p3 = "O"; // negative
         }
+
+        w1 = w2;
+        w2 = w3;
+        w3 = w4;
+        w4 = w5;
+        w5 = w6;
+
+        b1 = b2;
+        b2 = b3;
+        b3 = b4;
+        b4 = b5;
+        b5 = b6;
     }
 
     if !buf.is_empty() {
