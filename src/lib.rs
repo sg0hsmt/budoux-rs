@@ -81,24 +81,24 @@ pub fn parse(model: &Model, input: &str) -> Vec<String> {
 pub fn parse_with_threshold(model: &Model, input: &str, threshold: i32) -> Vec<String> {
     let chars: Vec<char> = input.chars().collect();
 
-    if chars.len() <= 3 {
+    if chars.len() <= 1 {
         return vec![input.to_string()];
     }
 
     let mut out: Vec<String> = Vec::new();
-    let mut buf: String = chars[0].to_string() + &chars[1].to_string() + &chars[2].to_string();
+    let mut buf: String = chars[0].to_string();
 
     let mut p1 = "U"; // unknown
     let mut p2 = "U"; // unknown
     let mut p3 = "U"; // unknown
 
-    let (mut w1, mut b1) = get_unicode_block_and_feature(&chars, 0); // i - 3
-    let (mut w2, mut b2) = get_unicode_block_and_feature(&chars, 1); // i - 2
-    let (mut w3, mut b3) = get_unicode_block_and_feature(&chars, 2); // i - 1
-    let (mut w4, mut b4) = get_unicode_block_and_feature(&chars, 3); // i
-    let (mut w5, mut b5) = get_unicode_block_and_feature(&chars, 4); // i + 1
+    let (mut w1, mut b1) = (String::from(""), String::from("999")); // i - 3
+    let (mut w2, mut b2) = (String::from(""), String::from("999")); // i - 2
+    let (mut w3, mut b3) = get_unicode_block_and_feature(&chars, 0); // i - 1
+    let (mut w4, mut b4) = get_unicode_block_and_feature(&chars, 1); // i
+    let (mut w5, mut b5) = get_unicode_block_and_feature(&chars, 2); // i + 1
 
-    for i in 3..chars.len() {
+    for i in 1..chars.len() {
         let (w6, b6) = get_unicode_block_and_feature(&chars, i + 2);
 
         let score: i32 = get_feature(
@@ -245,7 +245,7 @@ mod tests {
 
         assert_eq!(super::parse(m, ""), vec![""]);
         assert_eq!(super::parse(m, "日本語"), vec!["日本語"]);
-        assert_eq!(super::parse(m, "水と油"), vec!["水と油"]);
+        assert_eq!(super::parse(m, "水と油"), vec!["水と", "油"]);
         assert_eq!(
             super::parse(m, "水道水とミネラルウォーター"),
             vec!["水道水と", "ミネラルウォーター"]
