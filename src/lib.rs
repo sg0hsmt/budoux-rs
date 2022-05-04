@@ -302,6 +302,17 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_zh_hans() {
+        let m = super::models::default_simplified_chinese_model();
+
+        assert_eq!(super::parse(m, ""), vec![""]);
+        assert_eq!(
+            super::parse(m, "今天是晴天。"),
+            vec!["今天", "是", "晴天。"]
+        );
+    }
+
+    #[test]
     fn test_get_unicode_block_and_feature() {
         let to_chars = |x: &str| {
             let chars: Vec<char> = x.chars().collect();
