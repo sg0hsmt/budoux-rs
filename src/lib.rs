@@ -101,12 +101,9 @@ pub fn parse_with_threshold(model: &Model, input: &str, threshold: i32) -> Vec<S
     for i in 1..chars.len() {
         let (w6, b6) = get_unicode_block_and_feature(&chars, i + 2);
 
-        let score: i32 = get_feature(
-            &w1, &w2, &w3, &w4, &w5, &w6, &b1, &b2, &b3, &b4, &b5, &b6, p1, p2, p3,
-        )
-        .into_iter()
-        .map(|x| model.get(&x).unwrap_or(&0))
-        .sum();
+        let score = get_feature(
+            model, &w1, &w2, &w3, &w4, &w5, &w6, &b1, &b2, &b3, &b4, &b5, &b6, p1, p2, p3,
+        );
 
         if score > threshold {
             out.push(buf);
@@ -164,6 +161,7 @@ fn get_unicode_block_and_feature(chars: &[char], index: usize) -> (String, Strin
 /// get_feature returns feature list.
 #[allow(clippy::too_many_arguments)]
 fn get_feature(
+    model: &Model,
     w1: &str,
     w2: &str,
     w3: &str,
@@ -179,62 +177,64 @@ fn get_feature(
     p1: &str,
     p2: &str,
     p3: &str,
-) -> Vec<String> {
-    return vec![
-        // UP is means unigram of previous results.
-        ["UP1:", p1].concat(),
-        ["UP2:", p2].concat(),
-        ["UP3:", p3].concat(),
-        // BP is means bigram of previous results.
-        ["BP1:", p1, p2].concat(),
-        ["BP2:", p2, p3].concat(),
-        // UW is means unigram of words.
-        ["UW1:", w1].concat(),
-        ["UW2:", w2].concat(),
-        ["UW3:", w3].concat(),
-        ["UW4:", w4].concat(),
-        ["UW5:", w5].concat(),
-        ["UW6:", w6].concat(),
-        // BW is means bigram of words.
-        ["BW1:", w2, w3].concat(),
-        ["BW2:", w3, w4].concat(),
-        ["BW3:", w4, w5].concat(),
-        // TW is means trigram of words.
-        ["TW1:", w1, w2, w3].concat(),
-        ["TW2:", w2, w3, w4].concat(),
-        ["TW3:", w3, w4, w5].concat(),
-        ["TW4:", w4, w5, w6].concat(),
-        // UB is means unigram of unicode blocks.
-        ["UB1:", b1].concat(),
-        ["UB2:", b2].concat(),
-        ["UB3:", b3].concat(),
-        ["UB4:", b4].concat(),
-        ["UB5:", b5].concat(),
-        ["UB6:", b6].concat(),
-        // BB is means bigram of unicode blocks.
-        ["BB1:", b2, b3].concat(),
-        ["BB2:", b3, b4].concat(),
-        ["BB3:", b4, b5].concat(),
-        // TB is means trigram of unicode blocks.
-        ["TB1:", b1, b2, b3].concat(),
-        ["TB2:", b2, b3, b4].concat(),
-        ["TB3:", b3, b4, b5].concat(),
-        ["TB4:", b4, b5, b6].concat(),
-        // UQ is combination of UP and UB.
-        ["UQ1:", p1, b1].concat(),
-        ["UQ2:", p2, b2].concat(),
-        ["UQ3:", p3, b3].concat(),
-        // BQ is combination of UP and BB.
-        ["BQ1:", p2, b2, b3].concat(),
-        ["BQ2:", p2, b3, b4].concat(),
-        ["BQ3:", p3, b2, b3].concat(),
-        ["BQ4:", p3, b3, b4].concat(),
-        // TQ is combination of UP and TB.
-        ["TQ1:", p2, b1, b2, b3].concat(),
-        ["TQ2:", p2, b2, b3, b4].concat(),
-        ["TQ3:", p3, b1, b2, b3].concat(),
-        ["TQ4:", p3, b2, b3, b4].concat(),
-    ];
+) -> i32 {
+    let mut score: i32 = 0;
+
+    // UP is means unigram of previous results.
+    score += model.get(&["UP1:", p1].concat()).unwrap_or(&0);
+    score += model.get(&["UP2:", p2].concat()).unwrap_or(&0);
+    score += model.get(&["UP3:", p3].concat()).unwrap_or(&0);
+    // BP is means bigram of previous results.
+    score += model.get(&["BP1:", p1, p2].concat()).unwrap_or(&0);
+    score += model.get(&["BP2:", p2, p3].concat()).unwrap_or(&0);
+    // UW is means unigram of words.
+    score += model.get(&["UW1:", w1].concat()).unwrap_or(&0);
+    score += model.get(&["UW2:", w2].concat()).unwrap_or(&0);
+    score += model.get(&["UW3:", w3].concat()).unwrap_or(&0);
+    score += model.get(&["UW4:", w4].concat()).unwrap_or(&0);
+    score += model.get(&["UW5:", w5].concat()).unwrap_or(&0);
+    score += model.get(&["UW6:", w6].concat()).unwrap_or(&0);
+    // BW is means bigram of words.
+    score += model.get(&["BW1:", w2, w3].concat()).unwrap_or(&0);
+    score += model.get(&["BW2:", w3, w4].concat()).unwrap_or(&0);
+    score += model.get(&["BW3:", w4, w5].concat()).unwrap_or(&0);
+    // TW is means trigram of words.
+    score += model.get(&["TW1:", w1, w2, w3].concat()).unwrap_or(&0);
+    score += model.get(&["TW2:", w2, w3, w4].concat()).unwrap_or(&0);
+    score += model.get(&["TW3:", w3, w4, w5].concat()).unwrap_or(&0);
+    score += model.get(&["TW4:", w4, w5, w6].concat()).unwrap_or(&0);
+    // UB is means unigram of unicode blocks.
+    score += model.get(&["UB1:", b1].concat()).unwrap_or(&0);
+    score += model.get(&["UB2:", b2].concat()).unwrap_or(&0);
+    score += model.get(&["UB3:", b3].concat()).unwrap_or(&0);
+    score += model.get(&["UB4:", b4].concat()).unwrap_or(&0);
+    score += model.get(&["UB5:", b5].concat()).unwrap_or(&0);
+    score += model.get(&["UB6:", b6].concat()).unwrap_or(&0);
+    // BB is means bigram of unicode blocks.
+    score += model.get(&["BB1:", b2, b3].concat()).unwrap_or(&0);
+    score += model.get(&["BB2:", b3, b4].concat()).unwrap_or(&0);
+    score += model.get(&["BB3:", b4, b5].concat()).unwrap_or(&0);
+    // TB is means trigram of unicode blocks.
+    score += model.get(&["TB1:", b1, b2, b3].concat()).unwrap_or(&0);
+    score += model.get(&["TB2:", b2, b3, b4].concat()).unwrap_or(&0);
+    score += model.get(&["TB3:", b3, b4, b5].concat()).unwrap_or(&0);
+    score += model.get(&["TB4:", b4, b5, b6].concat()).unwrap_or(&0);
+    // UQ is combination of UP and UB.
+    score += model.get(&["UQ1:", p1, b1].concat()).unwrap_or(&0);
+    score += model.get(&["UQ2:", p2, b2].concat()).unwrap_or(&0);
+    score += model.get(&["UQ3:", p3, b3].concat()).unwrap_or(&0);
+    // BQ is combination of UP and BB.
+    score += model.get(&["BQ1:", p2, b2, b3].concat()).unwrap_or(&0);
+    score += model.get(&["BQ2:", p2, b3, b4].concat()).unwrap_or(&0);
+    score += model.get(&["BQ3:", p3, b2, b3].concat()).unwrap_or(&0);
+    score += model.get(&["BQ4:", p3, b3, b4].concat()).unwrap_or(&0);
+    // TQ is combination of UP and TB.
+    score += model.get(&["TQ1:", p2, b1, b2, b3].concat()).unwrap_or(&0);
+    score += model.get(&["TQ2:", p2, b2, b3, b4].concat()).unwrap_or(&0);
+    score += model.get(&["TQ3:", p3, b1, b2, b3].concat()).unwrap_or(&0);
+    score += model.get(&["TQ4:", p3, b2, b3, b4].concat()).unwrap_or(&0);
+
+    score
 }
 
 #[cfg(test)]
