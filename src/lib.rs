@@ -22,6 +22,9 @@ pub const DEFAULT_THRESHOLD: i32 = 1000;
 /// key (String) is feature of character, value (i32) is score of feature.
 pub type Model = HashMap<String, i32>;
 
+/// INVALID_FEATURE is indicate for invalid feature.
+const INVALID_FEATURE: &str = "▔";
+
 /// parse returns splitted string slice from input.
 /// It is shorthand for budoux::parse_with_threshold(model, input, budoux::DEFAULT_THRESHOLD).
 ///
@@ -92,8 +95,8 @@ pub fn parse_with_threshold(model: &Model, input: &str, threshold: i32) -> Vec<S
     let mut p2 = "U"; // unknown
     let mut p3 = "U"; // unknown
 
-    let (mut w1, mut b1) = (String::from(""), String::from("999")); // i - 3
-    let (mut w2, mut b2) = (String::from(""), String::from("999")); // i - 2
+    let (mut w1, mut b1) = (String::from(""), String::from(INVALID_FEATURE)); // i - 3
+    let (mut w2, mut b2) = (String::from(""), String::from(INVALID_FEATURE)); // i - 2
     let (mut w3, mut b3) = get_unicode_block_and_feature(&chars, 0); // i - 1
     let (mut w4, mut b4) = get_unicode_block_and_feature(&chars, 1); // i
     let (mut w5, mut b5) = get_unicode_block_and_feature(&chars, 2); // i + 1
@@ -146,7 +149,7 @@ pub fn parse_with_threshold(model: &Model, input: &str, threshold: i32) -> Vec<S
 /// get_unicode_block_and_feature returns unicode character and block feature from char slice.
 fn get_unicode_block_and_feature(chars: &[char], index: usize) -> (String, String) {
     if chars.len() <= index {
-        return (String::from(""), String::from("999")); // out of index.
+        return (String::from(""), String::from(INVALID_FEATURE)); // out of index.
     }
 
     let v = chars[index];
@@ -346,7 +349,7 @@ mod tests {
         );
         assert_eq!(
             super::get_unicode_block_and_feature(&to_chars("out of index"), 12),
-            (String::from(""), String::from("999"),)
+            (String::from(""), String::from(super::INVALID_FEATURE),)
         );
         assert_eq!(
             super::get_unicode_block_and_feature(&to_chars("あいうえお"), 0),
@@ -362,7 +365,7 @@ mod tests {
         );
         assert_eq!(
             super::get_unicode_block_and_feature(&to_chars("範囲外アクセス"), 7),
-            (String::from(""), String::from("999"),)
+            (String::from(""), String::from(super::INVALID_FEATURE),)
         );
     }
 
