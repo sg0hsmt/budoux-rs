@@ -98,11 +98,13 @@ pub fn parse_with_threshold(model: &Model, input: &str, threshold: i32) -> Vec<S
     let (mut w4, mut b4) = get_unicode_block_and_feature(&chars, 1); // i
     let (mut w5, mut b5) = get_unicode_block_and_feature(&chars, 2); // i + 1
 
+    let mut wb = String::with_capacity(20); // working buffer
+
     for i in 1..chars.len() {
         let (w6, b6) = get_unicode_block_and_feature(&chars, i + 2);
 
         let score = get_feature(
-            model, &w1, &w2, &w3, &w4, &w5, &w6, &b1, &b2, &b3, &b4, &b5, &b6, p1, p2, p3,
+            model, &mut wb, &w1, &w2, &w3, &w4, &w5, &w6, &b1, &b2, &b3, &b4, &b5, &b6, p1, p2, p3,
         );
 
         if score > threshold {
@@ -162,6 +164,7 @@ fn get_unicode_block_and_feature(chars: &[char], index: usize) -> (String, Strin
 #[allow(clippy::too_many_arguments)]
 fn get_feature(
     model: &Model,
+    buf: &mut String, // working buffer
     w1: &str,
     w2: &str,
     w3: &str,
@@ -181,60 +184,70 @@ fn get_feature(
     let mut score: i32 = 0;
 
     // UP is means unigram of previous results.
-    score += model.get(&["UP1:", p1].concat()).unwrap_or(&0);
-    score += model.get(&["UP2:", p2].concat()).unwrap_or(&0);
-    score += model.get(&["UP3:", p3].concat()).unwrap_or(&0);
+    score += model.get(key(buf, &["UP1:", p1])).unwrap_or(&0);
+    score += model.get(key(buf, &["UP2:", p2])).unwrap_or(&0);
+    score += model.get(key(buf, &["UP3:", p3])).unwrap_or(&0);
     // BP is means bigram of previous results.
-    score += model.get(&["BP1:", p1, p2].concat()).unwrap_or(&0);
-    score += model.get(&["BP2:", p2, p3].concat()).unwrap_or(&0);
+    score += model.get(key(buf, &["BP1:", p1, p2])).unwrap_or(&0);
+    score += model.get(key(buf, &["BP2:", p2, p3])).unwrap_or(&0);
     // UW is means unigram of words.
-    score += model.get(&["UW1:", w1].concat()).unwrap_or(&0);
-    score += model.get(&["UW2:", w2].concat()).unwrap_or(&0);
-    score += model.get(&["UW3:", w3].concat()).unwrap_or(&0);
-    score += model.get(&["UW4:", w4].concat()).unwrap_or(&0);
-    score += model.get(&["UW5:", w5].concat()).unwrap_or(&0);
-    score += model.get(&["UW6:", w6].concat()).unwrap_or(&0);
+    score += model.get(key(buf, &["UW1:", w1])).unwrap_or(&0);
+    score += model.get(key(buf, &["UW2:", w2])).unwrap_or(&0);
+    score += model.get(key(buf, &["UW3:", w3])).unwrap_or(&0);
+    score += model.get(key(buf, &["UW4:", w4])).unwrap_or(&0);
+    score += model.get(key(buf, &["UW5:", w5])).unwrap_or(&0);
+    score += model.get(key(buf, &["UW6:", w6])).unwrap_or(&0);
     // BW is means bigram of words.
-    score += model.get(&["BW1:", w2, w3].concat()).unwrap_or(&0);
-    score += model.get(&["BW2:", w3, w4].concat()).unwrap_or(&0);
-    score += model.get(&["BW3:", w4, w5].concat()).unwrap_or(&0);
+    score += model.get(key(buf, &["BW1:", w2, w3])).unwrap_or(&0);
+    score += model.get(key(buf, &["BW2:", w3, w4])).unwrap_or(&0);
+    score += model.get(key(buf, &["BW3:", w4, w5])).unwrap_or(&0);
     // TW is means trigram of words.
-    score += model.get(&["TW1:", w1, w2, w3].concat()).unwrap_or(&0);
-    score += model.get(&["TW2:", w2, w3, w4].concat()).unwrap_or(&0);
-    score += model.get(&["TW3:", w3, w4, w5].concat()).unwrap_or(&0);
-    score += model.get(&["TW4:", w4, w5, w6].concat()).unwrap_or(&0);
+    score += model.get(key(buf, &["TW1:", w1, w2, w3])).unwrap_or(&0);
+    score += model.get(key(buf, &["TW2:", w2, w3, w4])).unwrap_or(&0);
+    score += model.get(key(buf, &["TW3:", w3, w4, w5])).unwrap_or(&0);
+    score += model.get(key(buf, &["TW4:", w4, w5, w6])).unwrap_or(&0);
     // UB is means unigram of unicode blocks.
-    score += model.get(&["UB1:", b1].concat()).unwrap_or(&0);
-    score += model.get(&["UB2:", b2].concat()).unwrap_or(&0);
-    score += model.get(&["UB3:", b3].concat()).unwrap_or(&0);
-    score += model.get(&["UB4:", b4].concat()).unwrap_or(&0);
-    score += model.get(&["UB5:", b5].concat()).unwrap_or(&0);
-    score += model.get(&["UB6:", b6].concat()).unwrap_or(&0);
+    score += model.get(key(buf, &["UB1:", b1])).unwrap_or(&0);
+    score += model.get(key(buf, &["UB2:", b2])).unwrap_or(&0);
+    score += model.get(key(buf, &["UB3:", b3])).unwrap_or(&0);
+    score += model.get(key(buf, &["UB4:", b4])).unwrap_or(&0);
+    score += model.get(key(buf, &["UB5:", b5])).unwrap_or(&0);
+    score += model.get(key(buf, &["UB6:", b6])).unwrap_or(&0);
     // BB is means bigram of unicode blocks.
-    score += model.get(&["BB1:", b2, b3].concat()).unwrap_or(&0);
-    score += model.get(&["BB2:", b3, b4].concat()).unwrap_or(&0);
-    score += model.get(&["BB3:", b4, b5].concat()).unwrap_or(&0);
+    score += model.get(key(buf, &["BB1:", b2, b3])).unwrap_or(&0);
+    score += model.get(key(buf, &["BB2:", b3, b4])).unwrap_or(&0);
+    score += model.get(key(buf, &["BB3:", b4, b5])).unwrap_or(&0);
     // TB is means trigram of unicode blocks.
-    score += model.get(&["TB1:", b1, b2, b3].concat()).unwrap_or(&0);
-    score += model.get(&["TB2:", b2, b3, b4].concat()).unwrap_or(&0);
-    score += model.get(&["TB3:", b3, b4, b5].concat()).unwrap_or(&0);
-    score += model.get(&["TB4:", b4, b5, b6].concat()).unwrap_or(&0);
+    score += model.get(key(buf, &["TB1:", b1, b2, b3])).unwrap_or(&0);
+    score += model.get(key(buf, &["TB2:", b2, b3, b4])).unwrap_or(&0);
+    score += model.get(key(buf, &["TB3:", b3, b4, b5])).unwrap_or(&0);
+    score += model.get(key(buf, &["TB4:", b4, b5, b6])).unwrap_or(&0);
     // UQ is combination of UP and UB.
-    score += model.get(&["UQ1:", p1, b1].concat()).unwrap_or(&0);
-    score += model.get(&["UQ2:", p2, b2].concat()).unwrap_or(&0);
-    score += model.get(&["UQ3:", p3, b3].concat()).unwrap_or(&0);
+    score += model.get(key(buf, &["UQ1:", p1, b1])).unwrap_or(&0);
+    score += model.get(key(buf, &["UQ2:", p2, b2])).unwrap_or(&0);
+    score += model.get(key(buf, &["UQ3:", p3, b3])).unwrap_or(&0);
     // BQ is combination of UP and BB.
-    score += model.get(&["BQ1:", p2, b2, b3].concat()).unwrap_or(&0);
-    score += model.get(&["BQ2:", p2, b3, b4].concat()).unwrap_or(&0);
-    score += model.get(&["BQ3:", p3, b2, b3].concat()).unwrap_or(&0);
-    score += model.get(&["BQ4:", p3, b3, b4].concat()).unwrap_or(&0);
+    score += model.get(key(buf, &["BQ1:", p2, b2, b3])).unwrap_or(&0);
+    score += model.get(key(buf, &["BQ2:", p2, b3, b4])).unwrap_or(&0);
+    score += model.get(key(buf, &["BQ3:", p3, b2, b3])).unwrap_or(&0);
+    score += model.get(key(buf, &["BQ4:", p3, b3, b4])).unwrap_or(&0);
     // TQ is combination of UP and TB.
-    score += model.get(&["TQ1:", p2, b1, b2, b3].concat()).unwrap_or(&0);
-    score += model.get(&["TQ2:", p2, b2, b3, b4].concat()).unwrap_or(&0);
-    score += model.get(&["TQ3:", p3, b1, b2, b3].concat()).unwrap_or(&0);
-    score += model.get(&["TQ4:", p3, b2, b3, b4].concat()).unwrap_or(&0);
+    score += model.get(key(buf, &["TQ1:", p2, b1, b2, b3])).unwrap_or(&0);
+    score += model.get(key(buf, &["TQ2:", p2, b2, b3, b4])).unwrap_or(&0);
+    score += model.get(key(buf, &["TQ3:", p3, b1, b2, b3])).unwrap_or(&0);
+    score += model.get(key(buf, &["TQ4:", p3, b2, b3, b4])).unwrap_or(&0);
 
     score
+}
+
+/// key returns feature key.
+fn key<'a>(buf: &'a mut String, params: &[&str]) -> &'a str {
+    buf.clear();
+    for param in params {
+        buf.push_str(param);
+    }
+
+    buf
 }
 
 #[cfg(test)]
@@ -351,5 +364,24 @@ mod tests {
             super::get_unicode_block_and_feature(&to_chars("範囲外アクセス"), 7),
             (String::from(""), String::from("999"),)
         );
+    }
+
+    #[test]
+    fn test_key() {
+        let mut wb = String::with_capacity(20);
+
+        assert_eq!(super::key(&mut wb, &[""]), "");
+        assert_eq!(super::key(&mut wb, &["AAA", "BBB"]), "AAABBB");
+        assert_eq!(super::key(&mut wb, &["AAA", "BBB", "CCC"]), "AAABBBCCC");
+        assert_eq!(
+            super::key(&mut wb, &["TW4:", "日", "本", "語"]),
+            "TW4:日本語"
+        );
+        assert_eq!(
+            super::key(&mut wb, &["TQ4:", "O", "120", "120", "120"]),
+            "TQ4:O120120120"
+        );
+
+        assert_eq!(wb.capacity(), 20);
     }
 }
