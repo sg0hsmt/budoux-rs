@@ -30,6 +30,9 @@ var unicodeBlocksTemplate = template.Must(template.New("unicode_blocks").Parse(`
 
 /// UNICODE_BLOCKS range of code points block.
 pub const UNICODE_BLOCKS: [u32; {{len .Data}}] = [{{range .Data}} {{.}}, {{end}}];
+
+/// BLOCK_FEATURES feature of unicode block.
+pub const BLOCK_FEATURES: [&str; {{len .Data}}] = [{{range $i, $v := .Data}} {{$i | printf "\"%03d\""}}, {{end}}];
 `))
 
 var modelsTemplate = template.Must(template.New("models").Parse(`

@@ -82,39 +82,39 @@ pub fn parse(model: &Model, input: &str) -> Vec<String> {
 /// assert_eq!(words, vec!["これはテストです。"]);
 /// ```
 pub fn parse_with_threshold(model: &Model, input: &str, threshold: i32) -> Vec<String> {
-    let chars: Vec<char> = input.chars().collect();
-
-    if chars.len() <= 1 {
-        return vec![input.to_string()];
+    if input.is_empty() {
+        return vec![String::default()];
     }
 
     let mut out: Vec<String> = Vec::new();
-    let mut buf: String = chars[0].to_string();
 
     let mut p1 = "U"; // unknown
     let mut p2 = "U"; // unknown
     let mut p3 = "U"; // unknown
 
-    let (mut w1, mut b1) = (String::from(""), String::from(INVALID_FEATURE)); // i - 3
-    let (mut w2, mut b2) = (String::from(""), String::from(INVALID_FEATURE)); // i - 2
-    let (mut w3, mut b3) = get_unicode_block_and_feature(&chars, 0); // i - 1
-    let (mut w4, mut b4) = get_unicode_block_and_feature(&chars, 1); // i
-    let (mut w5, mut b5) = get_unicode_block_and_feature(&chars, 2); // i + 1
+    let mut chars = input.char_indices();
+
+    let (mut w1, mut b1) = ("", INVALID_FEATURE); // i - 3
+    let (mut w2, mut b2) = ("", INVALID_FEATURE); // i - 2
+    let (mut w3, mut s3, mut b3) = get_unicode_block_and_feature(input, &mut chars); // i - 1
+    let (mut w4, mut s4, mut b4) = get_unicode_block_and_feature(input, &mut chars); // i
+    let (mut w5, mut s5, mut b5) = get_unicode_block_and_feature(input, &mut chars); // i + 1
+
+    let mut start: usize = 0;
+    let mut end = s3;
 
     let mut wb = String::with_capacity(20); // working buffer
 
-    for i in 1..chars.len() {
-        let (w6, b6) = get_unicode_block_and_feature(&chars, i + 2);
+    while s3 != 0 {
+        let (w6, s6, b6) = get_unicode_block_and_feature(input, &mut chars);
 
         let score = get_feature(
-            model, &mut wb, &w1, &w2, &w3, &w4, &w5, &w6, &b1, &b2, &b3, &b4, &b5, &b6, p1, p2, p3,
+            model, &mut wb, w1, w2, w3, w4, w5, w6, b1, b2, b3, b4, b5, b6, p1, p2, p3,
         );
 
         if score > threshold {
-            out.push(buf);
-            buf = w4.to_string();
-        } else {
-            buf += &w4;
+            out.push(input[start..end].to_string());
+            start = end;
         }
 
         p1 = p2;
@@ -137,30 +137,44 @@ pub fn parse_with_threshold(model: &Model, input: &str, threshold: i32) -> Vec<S
         b3 = b4;
         b4 = b5;
         b5 = b6;
+
+        s3 = s4;
+        s4 = s5;
+        s5 = s6;
+
+        end += s3;
     }
 
-    if !buf.is_empty() {
-        out.push(buf);
+    if start < input.len() {
+        out.push(input[start..].to_string());
     }
 
     out
 }
 
 /// get_unicode_block_and_feature returns unicode character and block feature from char slice.
-fn get_unicode_block_and_feature(chars: &[char], index: usize) -> (String, String) {
-    if chars.len() <= index {
-        return (String::from(""), String::from(INVALID_FEATURE)); // out of index.
+fn get_unicode_block_and_feature<'a>(
+    input: &'a str,
+    chars: &mut std::str::CharIndices,
+) -> (&'a str, usize, &'a str) {
+    let v = chars.next();
+    if v.is_none() {
+        return ("", 0, INVALID_FEATURE);
     }
 
-    let v = chars[index];
-    let c = v as u32;
+    let (index, c) = v.unwrap();
+    let size = c.len_utf8();
 
-    let pos = match unicode_blocks::UNICODE_BLOCKS.binary_search(&c) {
+    let pos = match unicode_blocks::UNICODE_BLOCKS.binary_search(&(c as u32)) {
         Ok(v) => v + 1,
         Err(e) => e,
     };
 
-    return (v.to_string(), format!("{:>03}", pos));
+    (
+        &input[index..index + size],
+        size,
+        unicode_blocks::BLOCK_FEATURES[pos],
+    )
 }
 
 /// get_feature returns feature list.
@@ -330,42 +344,66 @@ mod tests {
 
     #[test]
     fn test_get_unicode_block_and_feature() {
-        let to_chars = |x: &str| {
-            let chars: Vec<char> = x.chars().collect();
-            return chars;
+        let seek = |chars: &mut std::str::CharIndices, offset: usize| {
+            for _ in 0..offset {
+                chars.next();
+            }
         };
 
+        let input = "abc";
+        let mut chars = input.char_indices();
+        seek(&mut chars, 0);
         assert_eq!(
-            super::get_unicode_block_and_feature(&to_chars("abc"), 0),
-            (String::from("a"), String::from("001"),)
+            super::get_unicode_block_and_feature(input, &mut chars),
+            ("a", 1, "001",)
         );
+
+        let input = "xyz";
+        let mut chars = input.char_indices();
+        seek(&mut chars, 2);
         assert_eq!(
-            super::get_unicode_block_and_feature(&to_chars("xyz"), 2),
-            (String::from("z"), String::from("001"),)
+            super::get_unicode_block_and_feature(input, &mut chars),
+            ("z", 1, "001",)
         );
+
+        let input = "out of index";
+        let mut chars = input.char_indices();
+        seek(&mut chars, 12);
         assert_eq!(
-            super::get_unicode_block_and_feature(&to_chars("abc"), 0),
-            (String::from("a"), String::from("001"),)
+            super::get_unicode_block_and_feature(input, &mut chars),
+            ("", 0, super::INVALID_FEATURE,)
         );
+
+        let input = "あいうえお";
+        let mut chars = input.char_indices();
+        seek(&mut chars, 0);
         assert_eq!(
-            super::get_unicode_block_and_feature(&to_chars("out of index"), 12),
-            (String::from(""), String::from(super::INVALID_FEATURE),)
+            super::get_unicode_block_and_feature(input, &mut chars),
+            ("あ", 3, "108",)
         );
+
+        let input = "わをん";
+        let mut chars = input.char_indices();
+        seek(&mut chars, 2);
         assert_eq!(
-            super::get_unicode_block_and_feature(&to_chars("あいうえお"), 0),
-            (String::from("あ"), String::from("108"),)
+            super::get_unicode_block_and_feature(input, &mut chars),
+            ("ん", 3, "108",)
         );
+
+        let input = "安";
+        let mut chars = input.char_indices();
+        seek(&mut chars, 0);
         assert_eq!(
-            super::get_unicode_block_and_feature(&to_chars("わをん"), 2),
-            (String::from("ん"), String::from("108"),)
+            super::get_unicode_block_and_feature(input, &mut chars),
+            ("安", 3, "120",)
         );
+
+        let input = "範囲外アクセス";
+        let mut chars = input.char_indices();
+        seek(&mut chars, 7);
         assert_eq!(
-            super::get_unicode_block_and_feature(&to_chars("安"), 0),
-            (String::from("安"), String::from("120"),)
-        );
-        assert_eq!(
-            super::get_unicode_block_and_feature(&to_chars("範囲外アクセス"), 7),
-            (String::from(""), String::from(super::INVALID_FEATURE),)
+            super::get_unicode_block_and_feature(input, &mut chars),
+            ("", 0, super::INVALID_FEATURE,)
         );
     }
 
