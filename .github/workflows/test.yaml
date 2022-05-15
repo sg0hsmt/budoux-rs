@@ -12,7 +12,7 @@ jobs:
   test:
     strategy:
       matrix:
-        toolchain: [stable, nightly]
+        toolchain: ["1.56.0", stable, nightly]
         platform: [ubuntu-latest]
     runs-on: ${{ matrix.platform }}
     steps:
